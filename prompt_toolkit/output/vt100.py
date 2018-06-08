@@ -18,6 +18,7 @@ from six.moves import range
 import array
 import errno
 import six
+import os
 
 __all__ = [
     'Vt100_Output',
@@ -364,9 +365,17 @@ def _get_size(fileno):
     #       is the default.) This causes segmentation faults on some systems.
     #       See: https://github.com/jonathanslenders/python-prompt-toolkit/pull/364
     fcntl.ioctl(fileno, termios.TIOCGWINSZ, buf)
+    lines, columns = buf[0], buf[1]
+
+    if lines == 0 and columns == 0:
+        # if the size could be be determined, try to guess it from environmental variables.
+        _lines = os.environ['LINES']
+        lines = int(_lines) if _lines else 0
+        _columns = os.environ['COLUMNS']
+        columns = int(_columns) if _columns else 0
 
     # Return rows, cols
-    return buf[0], buf[1]
+    return lines, columns
 
 
 class Vt100_Output(Output):
